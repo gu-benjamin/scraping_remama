@@ -71,13 +71,15 @@ for link in links_reels:
   data_publicacao = meta_reel_info[1].split(':')[0].split('em ')[1]
   # Formatando data da publicação para o formato correto
   data_formatada = datetime.strptime(data_publicacao, "%B %d, %Y").strftime("%d/%m/%Y")
+  time.sleep(1)
   legenda = driver.find_element(By.CSS_SELECTOR, "meta[property='og:title']").get_attribute('content').replace('Remama Dragão Rosa Oficial no Instagram: ', '')
+  time.sleep(1)
 
   print(f'Curtidas: {curtida}\nComentarios: {comentario}\nData: {data_formatada}\nLegenda: {legenda[:10]}...')
   # Adicionando informações do reel visitado nas listas
   curtidas.append(curtida)
   comentarios.append(comentario)
-  datas_publicacoes.append(data_publicacao)
+  datas_publicacoes.append(data_formatada)
   legendas.append(legenda)
 
   print(f'{len(curtidas)} {len(comentarios)} {len(datas_publicacoes)} {len(legendas)}')
