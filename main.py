@@ -94,5 +94,5 @@ data = {
 }
 
 dados_reels = pd.DataFrame(data)
-
+print(dados_reels)
 dados_reels.to_excel('dados_reels_remama.xlsx')
