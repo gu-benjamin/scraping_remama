@@ -59,35 +59,40 @@ n_reel = 1
 
 for link in links_reels:
   driver.get(link)
-  time.sleep(2)
-  print(f'Reel {n_reel}')
+  time.sleep(3)
+  print(f'Reel {n_reel}', end=' ')
   # Acessando as tags meta do DOM de cada reel do instagram do remama, onde contém as informações da publicação
   meta_reel_info = driver.find_element(By.NAME, 'description').get_attribute('content').split('-')
-  meta_reel_numbers = meta_reel_info[0].split(',')
+  meta_reel_numbers = meta_reel_info[0].replace(',','').split()
 
   # Extraindo separadamente informações de curtidas, comentários, legenda do post e data de publicação
-  curtida = int(meta_reel_numbers[0].replace('likes',''))
-  comentario = int(meta_reel_numbers[1].replace('comments ',''))
+  curtida = int(meta_reel_numbers[0]) if meta_reel_numbers[1] == 'likes' else int(meta_reel_numbers[2])
+  comentario = int(meta_reel_numbers[2]) if meta_reel_numbers[-1] == 'comments' else int(meta_reel_numbers[0])
   data_publicacao = meta_reel_info[1].split(':')[0].split('em ')[1]
   # Formatando data da publicação para o formato correto
   data_formatada = datetime.strptime(data_publicacao, "%B %d, %Y").strftime("%d/%m/%Y")
   legenda = driver.find_element(By.CSS_SELECTOR, "meta[property='og:title']").get_attribute('content').replace('Remama Dragão Rosa Oficial no Instagram: ', '')
 
+  print(f'Curtidas: {curtida}\nComentarios: {comentario}\nData: {data_formatada}\nLegenda: {legenda[:10]}...')
   # Adicionando informações do reel visitado nas listas
   curtidas.append(curtida)
   comentarios.append(comentario)
-  datas_publicacoes.append(datas_publicacoes)
+  datas_publicacoes.append(data_publicacao)
   legendas.append(legenda)
+
+  print(f'{len(curtidas)} {len(comentarios)} {len(datas_publicacoes)} {len(legendas)}')
 
   n_reel += 1
   # Indo pro próximo reel
   driver.back()
 
-dados_reels = pd.DataFrame({
+data = {
   'Curtidas': curtidas,
   'Comentários': comentarios,
   'Datas de publicação': datas_publicacoes,
   'Legendas': legendas
-})
+}
+
+dados_reels = pd.DataFrame(data)
 
 dados_reels.to_excel('dados_reels_remama.xlsx')
