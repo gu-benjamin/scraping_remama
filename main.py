@@ -53,6 +53,7 @@ curtidas = []
 comentarios = []
 datas_publicacoes = []
 legendas = []
+# links_postagem = [] # Caso queira rodar novamente o script, descomentar esta linha para adicionar o link da postagem ao dataframe
 
 print(f'Quantidade de reels: {len(links_reels)}')
 n_reel = 1
@@ -81,6 +82,7 @@ for link in links_reels:
   comentarios.append(comentario)
   datas_publicacoes.append(data_formatada)
   legendas.append(legenda)
+  # links_postagem.append(link) # Caso queira rodar novamente o script, descomentar esta linha para adicionar o link da postagem ao dataframe
 
   print(f'{len(curtidas)} {len(comentarios)} {len(datas_publicacoes)} {len(legendas)}')
 
@@ -92,7 +94,8 @@ data = {
   'Curtidas': curtidas,
   'Comentários': comentarios,
   'Datas de publicação': datas_publicacoes,
-  'Legendas': legendas
+  'Legendas': legendas,
+  # 'Links dos reels': links_postagem # Caso queira rodar novamente o script, descomentar esta linha para adicionar o link da postagem ao dataframe
 }
 
 dados_reels = pd.DataFrame(data)
