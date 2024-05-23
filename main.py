@@ -1,5 +1,5 @@
-import pandas as pd
 import time
+import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
@@ -10,16 +10,40 @@ service = Service()
 options = webdriver.ChromeOptions()
 driver = webdriver.Chrome(service=service, options=options)
 
-URL = 'https://www.instagram.com/remamadragaorosa/reels/'
+url = "https://www.instagram.com/accounts/login/"
 
-driver.get(URL)
+driver.get(url)
+time.sleep(2)
+
+# Insira um user para acessar a página de posts do Instagram
+username = "dieckgenios"
+senha = "A_lBiKc9MEFT8-9"
+
+driver.find_element(By.NAME, "username").send_keys(username)
+
+time.sleep(2)
+
+driver.find_element(By.NAME, "password").send_keys(senha)
+
+time.sleep(2)
+
+driver.find_element(By.CSS_SELECTOR, "button[type='submit']").click()
 
 time.sleep(5)
+
+# Insira o @ da página do Instagram no qual queira acessar e realizar o scraping
+pesquisa = "remamadragaorosa"
+driver.find_element(By.CSS_SELECTOR, "[aria-label='Pesquisa']").click()
+time.sleep(3)
+driver.find_element(By.CSS_SELECTOR, "[aria-label='Entrada da pesquisa']").send_keys(pesquisa)
+time.sleep(3)
+driver.find_element(By.CSS_SELECTOR, f"[href='/{pesquisa}/']").click()
+time.sleep(3)
+
 scroll_pause_time = 2  # pausa no tempo do scroll para acompanhar o processo
 screen_height = driver.execute_script("return window.screen.height;")  # pega o tamanho da pagina
 i = 1
-links_set_reels = set()
-descs_reels = []
+links_set_posts = set()
 
 while True:
   # desce a pagina no tamanho de uma tela por vez
@@ -27,13 +51,18 @@ while True:
   i += 1
   time.sleep(scroll_pause_time)
 
+  temp_links_posts = driver.find_elements(By.CSS_SELECTOR, "a[role='link'][href^='/p/']")[:]
   temp_links_reels = driver.find_elements(By.CSS_SELECTOR, "a[role='link'][href^='/reel/']")[:]
 
+  for link_post in temp_links_posts:
+    links_set_posts.add(link_post.get_attribute('href'))
+    
   for link_reel in temp_links_reels:
-    links_set_reels.add(link_reel.get_attribute('href'))
-  temp_links_reels.clear()
+    links_set_posts.add(link_reel.get_attribute('href'))
+    
+  temp_links_posts.clear()
 
-  # print(len(links_set_reels))
+  print(len(links_set_posts))
 
   # atualize a altura da rolagem sempre que rolar, pois a altura da rolagem pode mudar depois que rolamos a página
   scroll_height = driver.execute_script("return document.body.scrollHeight;")
@@ -47,57 +76,70 @@ while True:
       print('Fim dos reels!')
       break
 
-links_reels = list(links_set_reels)
+links_posts = list(links_set_posts)
 
 curtidas = []
 comentarios = []
 datas_publicacoes = []
 legendas = []
-# links_postagem = [] # Caso queira rodar novamente o script, descomentar esta linha para adicionar o link da postagem ao dataframe
+links_postagem = [] # Caso queira rodar novamente o script, descomentar esta linha para adicionar o link da postagem ao dataframe
+tipo_post = []
 
-print(f'Quantidade de reels: {len(links_reels)}')
-n_reel = 1
+print(f'Quantidade de posts: {len(links_posts)}')
+n_post = 1
 
-for link in links_reels:
-  driver.get(link)
-  time.sleep(3)
-  print(f'Reel {n_reel}', end=' ')
-  # Acessando as tags meta do DOM de cada reel do instagram do remama, onde contém as informações da publicação
-  meta_reel_info = driver.find_element(By.NAME, 'description').get_attribute('content').split('-')
-  meta_reel_numbers = meta_reel_info[0].replace(',','').split()
+for link in links_posts:
+  try:  
+    driver.get(link)
+    time.sleep(2)
+    print(f'\nPost {n_post}\n')
+    # Acessando as tags meta do DOM de cada reel do instagram do remama, onde contém as informações da publicação
+    meta_reel_info = driver.find_element(By.NAME, 'description').get_attribute('content').split('-')
+    meta_reel_numbers = meta_reel_info[0].replace(',','').split()
 
-  # Extraindo separadamente informações de curtidas, comentários, legenda do post e data de publicação
-  curtida = int(meta_reel_numbers[0]) if meta_reel_numbers[1] == 'likes' else int(meta_reel_numbers[2])
-  comentario = int(meta_reel_numbers[2]) if meta_reel_numbers[-1] == 'comments' else int(meta_reel_numbers[0])
-  data_publicacao = meta_reel_info[1].split(':')[0].split('em ')[1]
-  # Formatando data da publicação para o formato correto
-  data_formatada = datetime.strptime(data_publicacao, "%B %d, %Y").strftime("%d/%m/%Y")
-  time.sleep(1)
-  legenda = driver.find_element(By.CSS_SELECTOR, "meta[property='og:title']").get_attribute('content').replace('Remama Dragão Rosa Oficial no Instagram: ', '')
-  time.sleep(1)
+    # Extraindo separadamente informações de curtidas, comentários, legenda do post e data de publicação
+    curtida = int(meta_reel_numbers[0]) if meta_reel_numbers[1] == 'likes' else int(meta_reel_numbers[2])
+    comentario = int(meta_reel_numbers[2]) if meta_reel_numbers[-1] == 'comments' else int(meta_reel_numbers[0])
+    data_publicacao = meta_reel_info[1].split(':')[0].split('em ')[1]
+    # Formatando data da publicação para o formato correto
+    data_formatada = datetime.strptime(data_publicacao, "%B %d, %Y").strftime("%d/%m/%Y")
+    legenda = driver.find_element(By.CSS_SELECTOR, "meta[property='og:title']").get_attribute('content').replace('Remama Dragão Rosa Oficial no Instagram: ', '')
 
-  print(f'Curtidas: {curtida}\nComentarios: {comentario}\nData: {data_formatada}\nLegenda: {legenda[:10]}...')
-  # Adicionando informações do reel visitado nas listas
-  curtidas.append(curtida)
-  comentarios.append(comentario)
-  datas_publicacoes.append(data_formatada)
-  legendas.append(legenda)
-  # links_postagem.append(link) # Caso queira rodar novamente o script, descomentar esta linha para adicionar o link da postagem ao dataframe
+    print(f'Curtidas: {curtida}\nComentarios: {comentario}\nData: {data_formatada}\nLegenda: {legenda[:10]}...\nLink: {link}\nTipo: {'Post' if link[25:28] == '/p/' else 'Reel'}')
+    # Adicionando informações do reel visitado nas listas
+    curtidas.append(curtida)
+    comentarios.append(comentario)
+    datas_publicacoes.append(data_formatada)
+    legendas.append(legenda)
+    links_postagem.append(link) # Caso queira rodar novamente o script, descomentar esta linha para adicionar o link da postagem ao dataframe
+    tipo_post.append('Post' if link[25:28] == '/p/' else 'Reel')
 
-  print(f'{len(curtidas)} {len(comentarios)} {len(datas_publicacoes)} {len(legendas)}')
+    #   print(f'{len(curtidas)} {len(comentarios)} {len(datas_publicacoes)} {len(legendas)}')
 
-  n_reel += 1
-  # Indo pro próximo reel
-  driver.back()
+    # Indo pro próximo reel
+    driver.back()
+        
+  except NoSuchElementException as error:
+    curtidas.append('-')
+    comentarios.append('-')
+    datas_publicacoes.append('-')
+    legendas.append('-')
+    links_postagem.append('-') 
+    tipo_post.append('-')
+  finally:
+    n_post += 1
 
 data = {
   'Curtidas': curtidas,
   'Comentários': comentarios,
   'Datas de publicação': datas_publicacoes,
   'Legendas': legendas,
-  # 'Links dos reels': links_postagem # Caso queira rodar novamente o script, descomentar esta linha para adicionar o link da postagem ao dataframe
+  'Links dos posts': links_postagem, # Caso queira rodar novamente o script, descomentar esta linha para adicionar o link da postagem ao dataframe
+  'Tipo de post': tipo_post
 }
 
-dados_reels = pd.DataFrame(data)
-print(dados_reels)
-dados_reels.to_excel('dados_reels_remama.xlsx')
+dados_post = pd.DataFrame(data)
+print(dados_post)
+# Insira o nome do arquivo onde será salvo os dados do scraping (formato .xlsx)
+file_save = 'dados_posts_remama'
+dados_post.to_excel(f'{file_save}.xlsx')
