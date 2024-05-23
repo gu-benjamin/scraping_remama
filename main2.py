@@ -115,7 +115,6 @@ for link in links_posts:
 
     #   print(f'{len(curtidas)} {len(comentarios)} {len(datas_publicacoes)} {len(legendas)}')
 
-    n_post += 1
     # Indo pro próximo reel
     driver.back()
         
@@ -126,6 +125,8 @@ for link in links_posts:
     legendas.append('-')
     links_postagem.append('-') 
     tipo_post.append('-')
+  finally:
+    n_post += 1
 
 data = {
   'Curtidas': curtidas,
